@@ -7,7 +7,9 @@
 
 
 int main(int argc, char* argv[]){
-	char *command = malloc(sizeof(char*) * 100);
+
+	char *filepath = malloc(sizeof(char) * 4096);
+	char *command = malloc(sizeof(char) * 100);
 	char *program = malloc(sizeof(char) * 50);
 	char **my_args = malloc(sizeof(char*) * 5);
 	char *token = malloc(sizeof(char*) * 50);
@@ -17,7 +19,10 @@ int main(int argc, char* argv[]){
 		my_args[i] = (char*) malloc(sizeof(char*));
 	}
 
-	printf("starting\n");
+	printf("Welcome to tetrashell!\nEnter the path of the quicksave you would like to hack: ");
+	fgets(filepath, 4096, stdin);
+	printf("Quicksave set.\nEnter your command below:\n");
+
 	while (strcmp(token, "exit") != 0){	
 		printf("tetrashell> ");
 		fgets(command, 100, stdin);
