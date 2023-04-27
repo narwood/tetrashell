@@ -45,44 +45,48 @@ int main(int argc, char* argv[]){
 		printf("nulled last arg\n");
 		//strcpy(my_args[i+1], "\0");
 		//my_args[1] = strtok(command, " ");
-		
+		 for (int j = 0; j < i; j++){
+                 	printf("%s\n", my_args[j]);
+                        }
 		//scanf("%s", program);
 		if(strcmp(my_args[0], "exit") == 0){
 			exit(1);		
 		}
 		printf("line 20\n");
 
+		if (strcmp(my_args[0], "recover") == 0){
+			printf("saw recover\n");
+			pid_t pid = fork();
+			if (pid){
+				printf("in recover parent\n");
+				int res;
+				wait(&res);
+			} else {
+				printf("in recover child\n");
+				execv("recover", my_args);
+			}}
 
-		pid_t pid = fork();
-		if (pid){
-			printf("in parent\n");
-			int res;
-			wait(&res);
-		} else {
-			printf("in child\n");	
-			if (strcmp(my_args[0], "recover") == 0){
-				printf("saw recover\n");
-				//my_args[0] = strcat("./", my_args[0]);                        
-				//printf("set first arg to ./recover\n");
-			}
 			else if (strcmp(my_args[0], "check") == 0){
 				printf("checking\n");
-			}	
-			for (int j = 0; j < i; j++){
-				printf("%s\n", my_args[j]);
+				pid_t pid = fork();
+				if (pid){
+					printf("in check parent\n");
+					int res;
+					wait(&res);
+				} else {
+					printf("in check child\n");
+					execv("check", my_args);
+				}	
+				printf("you're not supposed to be in here\n");
 			}
-			printf("about to execv\n");
-			execv(my_args[0], my_args);
-			//printf("you're not supposed to be in here\n");
-			}
-			   free(command);
-			   printf("freed command\n");
-			   program = my_args[0];
+			free(command);
+			printf("freed command\n");
+			program = my_args[0];
 			printf("program name: %s\n", my_args[0]);
-			   for (int i = 0; i < 5; i++){
-			   free(my_args[i]);
-			   }
-			   printf("freed args list\n");
-			 }
+			for (int i = 0; i < 5; i++){
+				free(my_args[i]);
+			}
+			printf("freed args list\n");
+		}
 
-	return 0;}
+		return 0;}
