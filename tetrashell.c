@@ -8,9 +8,13 @@
 
 int main(int argc, char* argv[]){
 char *command = malloc(sizeof(char) * 100);
-char *program;
-char **my_args = malloc(sizeof(char*) * 5);
+char *program = malloc(sizeof(char) * 50);
+char **my_args = (char**) malloc(sizeof(char*) * 5);
 int i = 1;
+
+for (int i = 0; i < 5; i++){
+	my_args[i] = (char*) malloc(sizeof(char*));
+}
 
 printf("starting\n");
 while (strcmp(program, "exit") != 0){	
