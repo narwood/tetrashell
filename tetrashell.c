@@ -8,11 +8,13 @@
 
 int main(int argc, char* argv[]){
 
-	char *filepath = malloc(sizeof(char) * 4096);
-	char *command = malloc(sizeof(char) * 100);
-	char *program = malloc(sizeof(char) * 50);
+	const int MAX_LINE = 4096;
+
+	char *filepath = malloc(sizeof(char) * MAX_LINE);
+	char *command = malloc(sizeof(char) * MAX_LINE);
+	char *arg = malloc(sizeof(char) * 50);
 	char **my_args = malloc(sizeof(char*) * 5);
-	char *token = malloc(sizeof(char*) * 50);
+	char *program = malloc(sizeof(char*) * 50);
 	int i = 1;
 
 	for (int i = 0; i < 5; i++){
@@ -23,30 +25,21 @@ int main(int argc, char* argv[]){
 	fgets(filepath, 4096, stdin);
 	printf("Quicksave set.\nEnter your command below:\n");
 
-	while (strcmp(token, "exit") != 0){	
+	while (strcmp(program, "exit") != 0){	
+		
 		printf("tetrashell> ");
-		fgets(command, 100, stdin);
-		printf("got command\n");
+		
+		fgets(command, MAX_LINE, stdin);
 		command[strlen(command) - 1] = '\0';
-		printf("added null terminator to command\n");
-		program = strtok(command, " ");
-		printf("set program to first arg\n");
-		strcpy(token, program);	
-		printf("strcopied program into token\n");
-		strcpy(my_args[0], program);
-		printf("set program to index 0\n");
-		while (program = strtok(NULL, " ")){
-			printf("in loop\n");
-			strcpy(my_args[i], program);
+		
+		arg = strtok(command, " ");
+		strcpy(program, arg);	
+		strcpy(my_args[0], arg);
+		while (arg = strtok(NULL, " ")){
+			strcpy(my_args[i], arg);
 			i++;
 		}
-		printf("took all args\n");
 		my_args[i] = NULL;
-		printf("nulled last arg\n");
-		//strcpy(my_args[i+1], "\0");
-		//my_args[1] = strtok(command, " ");
-		
-		//scanf("%s", program);
 		if(strcmp(my_args[0], "exit") == 0){
 			exit(1);		
 		}
