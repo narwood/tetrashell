@@ -9,19 +9,20 @@
 int main(int argc, char* argv[]){
 char *command = malloc(sizeof(char) * 100);
 char *program;
-char *my_args[4];
+char **my_args = malloc(sizeof(char*) * 5);
 int i = 1;
 
+printf("starting\n");
 while (strcmp(program, "exit") != 0){	
 	printf("tetrashell> ");
 	fgets(command, 100, stdin);
 	program = strtok(command, " ");
-	my_args[0] = program;
-/*	while (program = strtok(NULL, " ")){
+	strcpy(my_args[0], program);
+	while (program = strtok(NULL, " ")){
 	strcpy(my_args[i], program);
-	++i;*/
-//	}
-	my_args[i+1] = NULL;
+	++i;
+	}
+	strcpy(my_args[i+1], "\0");
 	//my_args[1] = strtok(command, " ");
 	
 //scanf("%s", program);
@@ -41,7 +42,7 @@ while (strcmp(program, "exit") != 0){
 		if (strcmp(my_args[0], "recover") == 0){
                         printf("recovering\n");
 		}
-		else if (strcmp(my_args[0], "check ") == 0){
+		else if (strcmp(my_args[0], "check") == 0){
 			printf("checking\n");
 		}	
 
