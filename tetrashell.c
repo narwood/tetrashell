@@ -23,6 +23,7 @@ int main(int argc, char* argv[]){
 
 	printf("Welcome to tetrashell!\nEnter the path of the quicksave you would like to hack: ");
 	fgets(filepath, 4096, stdin);
+	filepath[strlen(filepath) - 1] = '\0';
 	printf("Quicksave set.\nEnter your command below:\n");
 
 	while (strcmp(program, "exit") != 0){	
@@ -33,45 +34,35 @@ int main(int argc, char* argv[]){
 		command[strlen(command) - 1] = '\0';
 		
 		arg = strtok(command, " ");
-		strcpy(program, arg);	
+		strcpy(program, arg);
 		strcpy(my_args[0], arg);
-		while (arg = strtok(NULL, " ")){
+	/*	while (arg = strtok(NULL, " ")){
 			strcpy(my_args[i], arg);
 			i++;
 		}
 		my_args[i] = NULL;
-
+*/
 		if(strcmp(my_args[0], "exit") == 0){
 			exit(1);		
 		}
 		printf("line 20\n");
 
-		if (strcmp(my_args[0], "recover") == 0){
-			printf("saw recover\n");
+		if ((strcmp(my_args[0], "recover") == 0) || (strcmp(my_args[0], "check") == 0)){
+			printf("saw recover or check\n");
 			pid_t pid = fork();
 			if (pid){
 				printf("in recover parent\n");
 				int res;
 				wait(&res);
 			} else {
+				my_args[1] = filepath;
+				my_args[2] = NULL;
 				printf("in recover child\n");
-				execv("recover", my_args);
-			}}
+				execv(my_args[0], my_args);
+			 	printf("you're not supposed to be in here\n");}
 
-			else if (strcmp(my_args[0], "check") == 0){
-				printf("checking\n");
-				pid_t pid = fork();
-				if (pid){
-					printf("in check parent\n");
-					int res;
-					wait(&res);
-				} else {
-					printf("in check child\n");
-					execv("check", my_args);
-				}	
-				printf("you're not supposed to be in here\n");
 			}
-			free(command);
+/*			free(command);
 			printf("freed command\n");
 			program = my_args[0];
 			printf("program name: %s\n", my_args[0]);
@@ -79,6 +70,6 @@ int main(int argc, char* argv[]){
 				free(my_args[i]);
 			}
 			printf("freed args list\n");
-		}
+*/		}
 
 		return 0;}
