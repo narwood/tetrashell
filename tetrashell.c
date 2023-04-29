@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "tetris.h"
-
+#include <dirent.h>
 
 int main(int argc, char* argv[]) {
 
@@ -41,12 +41,12 @@ int main(int argc, char* argv[]) {
 	printf("Quicksave set.\nEnter your command below:\n");
 
 	while (strcmp(program, "exit") != 0){	
-		
+
 		printf("tetrashell> ");
-		
+
 		fgets(command, MAX_LINE, stdin);
 		command[strlen(command) - 1] = '\0';
-		
+
 		arg = strtok(command, " ");
 		strcpy(program, arg);
 		strcpy(my_args[0], arg);
@@ -54,17 +54,17 @@ int main(int argc, char* argv[]) {
 		if (strcmp(my_args[0], "exit") == 0) {
 			exit(1);		
 		}
-	
+
 		if (!strcmp(my_args[0], "rank")) {
 			if (pipe(pip) == -1){
 				fprintf(stderr, "Pipe failed\n");
 				return 1;
 			}			                        
-    }
+		}
 
 		if (!strcmp(my_args[0], "undo")) {
 			if (beenModified == 1) {
-			       
+
 				//modify lines	
 				pid_t pid = fork();
 				if (pid) {
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
 					my_args[2] = last_score;
 					execv("modify", my_args);
 				}
-			
+
 				//modify score
 				pid = fork();
 				if (pid) {
@@ -95,6 +95,7 @@ int main(int argc, char* argv[]) {
 
 		else {
 
+
 		pid_t pid = fork();
 		if (pid) {
 			
@@ -111,58 +112,123 @@ int main(int argc, char* argv[]) {
 		} else {
 
 
+
 				while (arg = strtok(NULL, " ")) {
 					strcpy(my_args[i], arg);
 					i++;
 				}
 
-			//check that i is correct # - bunch of if loops
-			if ((strcmp(my_args[0], "recover") == 0) || (strcmp(my_args[0], "check") == 0)) {
-				printf("in recover/check\n");
-				if (i != 1) {
-					fprintf(stderr, "Check and recover do not take arguments.\n");
-					return 1;
+				//check that i is correct # - bunch of if loops
+				if ((strcmp(my_args[0], "recover") == 0) || (strcmp(my_args[0], "check") == 0)) {
+					if (i != 1) {
+						fprintf(stderr, "Check and recover do not take arguments.\n");
+						return 1;
+					}
+					my_args[i] = filepath;
+					my_args[i+1] = NULL;
+                                        execv(my_args[0], my_args);
 				}
-				my_args[i] = filepath;
-			}
 
-			else if (!strcmp(my_args[0], "modify")) {
-				if (i != 3) {
-            fprintf(stderr, "Please enter a scoring metric and a number.\n");
-            return 1;
-         }
+				else if (!strcmp(my_args[0], "modify")) {
+					if (i != 3) {
+						fprintf(stderr, "Please enter a scoring metric and a number.\n");
+						return 1;
+					}
 
-				fp = fopen("tetris_quicksave.bin", "rb");
-				fread(&last_game, sizeof(last_game), 1, fp);
-				fclose(fp);
-				snprintf(last_score, MAX_LINE, "%d", last_game.score);
-				snprintf(last_lines, MAX_LINE, "%d", last_game.lines);
-				beenModified = 1;
-        my_args[i] = filepath;
+					fp = fopen("tetris_quicksave.bin", "rb");
+					fread(&last_game, sizeof(last_game), 1, fp);
+					fclose(fp);
+					snprintf(last_score, MAX_LINE, "%d", last_game.score);
+					snprintf(last_lines, MAX_LINE, "%d", last_game.lines);
+					beenModified = 1;
+					my_args[i] = filepath;
+					my_args[i+1] = NULL;
+                                        execv(my_args[0], my_args);
+				}
+
+				else if (!strcmp(my_args[0], "rank")) {
+					if (i != 3) {
+						fprintf(stderr, "Please enter a ranking metric and a number.\n");
+						return 1;
+					}
+					if (dup2(pip[1], STDIN_FILENO) == -1) {
+						fprintf(stderr, "invalid file\n");
+						return 1;
+					}
+					close(pip[0]);
+					close(pip[1]);
+					my_args[i] = "uplink\0";
+					my_args[i+1] = NULL;
+                                	execv(my_args[0], my_args);
+				}
+
 			}
 			
-			else if (!strcmp(my_args[0], "rank")) {
-				if (i != 3) {
-					fprintf(stderr, "Please enter a ranking metric and a number.\n");
-                                        return 1;
-				}
-				close(pip[1]);
-				if (dup2(pip[0], 0) == -1) {
-				close(pip[0]);	
-				fprintf(stderr, "invalid file\n");
-					return 1;
-				}
-				//close(pip[1]);
-				my_args[i] = "uplink\0";
-			}
-			my_args[i+1] = NULL;
-			execv(my_args[0], my_args);	
+			//Anything you want to execute after execv goes here
+			if (!strcmp(my_args[0], "recover")) {
+				
+				DIR *dr;
+        			struct dirent *en;
 
+   				//get fileCount
+				int fileCount = 1;
+				int maxNameSize = 0;
+				dr = opendir("recovered"); //open dir
+   				if (dr) {
+      					while ((en = readdir(dr)) != NULL) {
+      						fileCount += 1;
+						if (strlen(en->d_name) > maxNameSize) {
+							maxNameSize = strlen(en->d_name);
+						}
+					}
+      					closedir(dr); //close all directory
+   				}
+				else {
+                                        fprintf(stderr, "Could not open directory");
+                                }
+
+				//get number of digits in fileCount, max chars in fileNames
+				
+				//loop again, add to array and print
+				char **fileNames = malloc(sizeof(char*) * fileCount);
+			      	int index = 0;	
+				dr = opendir("recovered");
+				if (dr) {
+					while ((en = readdir(dr)) != NULL) {
+						fileNames[index] = en->d_name;
+						
+						//printing time :)
+						printf("%d %s\n", fileCount, en->d_name); //print all directory name
+						index += 1;	
+					}
+					closedir(dr);
+				}
+
+
+				printf("If you would like to switch to one of these quicksaves, type (y): ");
+				fgets(command, MAX_LINE, stdin);
+                		command[strlen(command) - 1] = '\0';
+				if (!strcmp(command, "y")) {
+					printf("Which quicksave? (Enter a number): ");
+					fgets(command, MAX_LINE, stdin);
+					command[strlen(command)-1] = '\0';
+					int switchSave = atoi(command);
+					if (switchSave < 1 || switchSave > fileCount) {
+						fprintf(stderr, "Number not in range of recovered quicksaves.\n");
+					}
+					else {
+						filepath = fileNames[switchSave-1];
+						printf("Done! Current quicksave is now %s\n", filepath);
+					}
+				}
+   				else {
+					printf("Okay, quicksave not switched.\n");
+				}
 			}
 		}
-    }
+	}
 
-		//still need to free all our shit
-		
+	//still need to free all our shit
+
 	return 0;
 }
