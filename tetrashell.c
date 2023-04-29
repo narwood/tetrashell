@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -18,11 +19,16 @@ int main(int argc, char* argv[]) {
 	char *program = malloc(sizeof(char*) * 50);
 	int i = 1;
 
+
 	char last_score[MAX_LINE];
 	char last_lines[MAX_LINE];
 	TetrisGameState last_game;
 	int beenModified = 0;
 	FILE *fp;
+
+	int is_rank = 0;
+	int pip[2];
+
 
 	for (int i = 0; i < 5; i++){
 		my_args[i] = (char*) malloc(sizeof(char*));
@@ -49,20 +55,13 @@ int main(int argc, char* argv[]) {
 		}
 	
 		if (!strcmp(my_args[0], "rank")) {
-			
-			
-                        if (i != 3) {
-                        	fprintf(stderr, "Please enter a ranking metric and a number.\n");
-                        	return 1;
-                        }
-                        
-			strcpy(my_args[i], "uplink");
-                        my_args[i+1] = NULL;
-                        //pipe filepath to rank stdin??
-                        //run rank with execv, not sure if this comes before piping or after
-                }
+			if (pipe(pip) == -1){
+				fprintf(stderr, "Pipe failed\n");
+				return 1;
+			}			                        
+    }
 
-		else if (!strcmp(my_args[0], "undo")) {
+		if (!strcmp(my_args[0], "undo")) {
 			if (beenModified == 1) {
 			       
 				//modify lines	
@@ -95,49 +94,74 @@ int main(int argc, char* argv[]) {
 
 		else {
 
-			pid_t pid = fork();
-			if (pid) {
-				int res;
-				wait(&res);
-			} else {
+		pid_t pid = fork();
+		if (pid) {
+			if (!strcmp(my_args[0], "rank")){
+				close(pip[1]);
+				if (write(pip[0], filepath, strlen(filepath)) == -1) { 
+					fprintf(stderr, "Write failed. errno: %i\n", errno);
+                                        return 1;
+				}
+			}
+			int res;
+			wait(&res);
+			if (!strcmp(my_args[0], "rank")){
+				close(pip[0]);
+			}
+		} else {
+
 
 				while (arg = strtok(NULL, " ")) {
 					strcpy(my_args[i], arg);
 					i++;
 				}
 
-				//check that i is correct # - bunch of if loops
-				if ((strcmp(my_args[0], "recover") == 0) || (strcmp(my_args[0], "check") == 0)) {
-					if (i != 1) {
-						fprintf(stderr, "Check and recover do not take arguments.\n");
-						return 1;
-					}
+			//check that i is correct # - bunch of if loops
+			if ((strcmp(my_args[0], "recover") == 0) || (strcmp(my_args[0], "check") == 0)) {
+				printf("in recover/check\n");
+				if (i != 1) {
+					fprintf(stderr, "Check and recover do not take arguments.\n");
+					return 1;
 				}
-
-				else if (!strcmp(my_args[0], "modify")) {
-					if (i != 3) {
-                                	        fprintf(stderr, "Please enter a scoring metric and a number.\n");
-                                        	return 1;
-                                	}
-
-					fp = fopen("tetris_quicksave.bin", "rb");
-					fread(&last_game, sizeof(last_game), 1, fp);
-					fclose(fp);
-					snprintf(last_score, MAX_LINE, "%d", last_game.score);
-					snprintf(last_lines, MAX_LINE, "%d", last_game.lines);
-					beenModified = 1;
-				}
-			
 				my_args[i] = filepath;
-				my_args[i+1] = NULL;
-				execv(my_args[0], my_args);
+			}
+
+			else if (!strcmp(my_args[0], "modify")) {
+				if (i != 3) {
+            fprintf(stderr, "Please enter a scoring metric and a number.\n");
+            return 1;
+         }
+
+				fp = fopen("tetris_quicksave.bin", "rb");
+				fread(&last_game, sizeof(last_game), 1, fp);
+				fclose(fp);
+				snprintf(last_score, MAX_LINE, "%d", last_game.score);
+				snprintf(last_lines, MAX_LINE, "%d", last_game.lines);
+				beenModified = 1;
+        my_args[i] = filepath
+			}
 			
+			else if (!strcmp(my_args[0], "rank")) {
+				if (i != 3) {
+					fprintf(stderr, "Please enter a ranking metric and a number.\n");
+                                        return 1;
+				}
+				if (dup2(pip[1], STDIN_FILENO) == -1) {
+					fprintf(stderr, "invalid file\n");
+					return 1;
+				}
+				close(pip[0]);
+				close(pip[1]);
+				my_args[i] = "uplink\0";
+			}
+			my_args[i+1] = NULL;
+			execv(my_args[0], my_args);	
 
 			}
 		}
+    }
 
 		//still need to free all our shit
 		
-	}
 	return 0;
 }
