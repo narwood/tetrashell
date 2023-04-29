@@ -1,3 +1,4 @@
+
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -96,18 +97,17 @@ int main(int argc, char* argv[]) {
 
 		pid_t pid = fork();
 		if (pid) {
-			if (!strcmp(my_args[0], "rank")){
-				close(pip[1]);
-				if (write(pip[0], filepath, strlen(filepath)) == -1) { 
-					fprintf(stderr, "Write failed. errno: %i\n", errno);
-                                        return 1;
-				}
-			}
+			
 			int res;
-			wait(&res);
 			if (!strcmp(my_args[0], "rank")){
-				close(pip[0]);
-			}
+                                close(pip[0]);
+                                if (write(pip[1], filepath, strlen(filepath)) == -1) {
+                                        fprintf(stderr, "Write failed. errno: %i\n", errno);
+                                        return 1;
+                                }
+			close(pip[1]);
+			wait(&res);                        
+}
 		} else {
 
 
@@ -138,7 +138,7 @@ int main(int argc, char* argv[]) {
 				snprintf(last_score, MAX_LINE, "%d", last_game.score);
 				snprintf(last_lines, MAX_LINE, "%d", last_game.lines);
 				beenModified = 1;
-        my_args[i] = filepath
+        my_args[i] = filepath;
 			}
 			
 			else if (!strcmp(my_args[0], "rank")) {
@@ -146,12 +146,13 @@ int main(int argc, char* argv[]) {
 					fprintf(stderr, "Please enter a ranking metric and a number.\n");
                                         return 1;
 				}
-				if (dup2(pip[1], STDIN_FILENO) == -1) {
-					fprintf(stderr, "invalid file\n");
+				close(pip[1]);
+				if (dup2(pip[0], 0) == -1) {
+				close(pip[0]);	
+				fprintf(stderr, "invalid file\n");
 					return 1;
 				}
-				close(pip[0]);
-				close(pip[1]);
+				//close(pip[1]);
 				my_args[i] = "uplink\0";
 			}
 			my_args[i+1] = NULL;
