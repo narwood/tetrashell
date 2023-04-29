@@ -40,13 +40,10 @@ int main(int argc, char* argv[]) {
 	filepath[strlen(filepath) - 1] = '\0';
 	printf("Quicksave set.\nEnter your command below:\n");
 
-	while (strcmp(program, "exit") != 0){	
-
+	while (strcmp(program, "exit") != 1){	
 		printf("tetrashell> ");
-
 		fgets(command, MAX_LINE, stdin);
 		command[strlen(command) - 1] = '\0';
-
 		arg = strtok(command, " ");
 		strcpy(program, arg);
 		strcpy(my_args[0], arg);
@@ -61,10 +58,8 @@ int main(int argc, char* argv[]) {
 				return 1;
 			}			                        
 		}
-
 		if (!strcmp(my_args[0], "undo")) {
 			if (beenModified == 1) {
-
 				//modify lines	
 				pid_t pid = fork();
 				if (pid) {
@@ -76,7 +71,6 @@ int main(int argc, char* argv[]) {
 					my_args[2] = last_score;
 					execv("modify", my_args);
 				}
-
 				//modify score
 				pid = fork();
 				if (pid) {
@@ -107,7 +101,7 @@ int main(int argc, char* argv[]) {
                                         return 1;
                                 }
 			close(pip[1]);
-			wait(&res);                        
+			waitpid(pid, &res, 0);                        
 }
 		} else {
 
@@ -151,13 +145,13 @@ int main(int argc, char* argv[]) {
 						fprintf(stderr, "Please enter a ranking metric and a number.\n");
 						return 1;
 					}
-					if (dup2(pip[1], STDIN_FILENO) == -1) {
+					close(pip[1]);
+					if (dup2(pip[0], 0) == -1) {
 						fprintf(stderr, "invalid file\n");
 						return 1;
 					}
 					close(pip[0]);
-					close(pip[1]);
-					my_args[i] = "uplink\0";
+					my_args[i] = "uplink";
 					my_args[i+1] = NULL;
                                 	execv(my_args[0], my_args);
 				}
@@ -226,7 +220,7 @@ int main(int argc, char* argv[]) {
 				}
 			}
 		}
-	}
+}
 
 	//still need to free all our shit
 
