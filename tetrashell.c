@@ -18,6 +18,7 @@ int main(int argc, char* argv[]) {
 	char *arg = malloc(sizeof(char) * 50);
 	char **my_args = malloc(sizeof(char*) * 5);
 	char *program = malloc(sizeof(char*) * 50);
+	char abbr[5];
 	int i = 1;
 
 
@@ -40,8 +41,9 @@ int main(int argc, char* argv[]) {
 	filepath[strlen(filepath) - 1] = '\0';
 	printf("Quicksave set.\nEnter your command below:\n");
 
-	while (strcmp(program, "exit") != 1){	
-		printf("tetrashell> ");
+	while (strcmp(program, "exit") != 1){
+		strncpy(abbr, filepath, 4);
+		printf("%s@tetrashell[%s]> ", getlogin(), abbr);	
 		fgets(command, MAX_LINE, stdin);
 		command[strlen(command) - 1] = '\0';
 		arg = strtok(command, " ");
@@ -86,7 +88,25 @@ int main(int argc, char* argv[]) {
 				printf("Previous quicksave restored.\n");
 			}
 		}
-
+/*		if (!strcmp(arg, "info")){
+			printf("Current savefile: %s\nScore: %i\nLines: %i\n", filepath, filepath->score, filepath->lines)
+		}*/
+		if (!strcmp(arg, "help")){
+			arg = strtok(NULL, " ");
+			if (!strcmp(arg, "check")){
+				printf("Check determines if the inputted quicksave is valid or not.\n");
+			} else if (!strcmp(arg, "modify")){
+                                printf("Modify allows you to alter the score and lines values of your quicksave.\n");
+                        } else if (!strcmp(arg, "rank")){
+                                printf("Rank displays your quicksave on the internal leaderboard.\n");
+                        } else if (!strcmp(arg, "exit")){
+                                printf("Exit will end the program.\n");
+                        } else if (!strcmp(arg, "undo")){
+                                printf("Undo will revert your last modify change.\n");
+                        } else if (!strcmp(arg, "recover")){
+                                printf("Recover quicksaves from a disk image.\n");
+                        }
+		}
 		else {
 
 
