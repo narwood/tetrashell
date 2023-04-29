@@ -4,9 +4,10 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include "tetris.h"
 
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[]) {
 
 	const int MAX_LINE = 4096;
 
@@ -16,7 +17,12 @@ int main(int argc, char* argv[]){
 	char **my_args = malloc(sizeof(char*) * 5);
 	char *program = malloc(sizeof(char*) * 50);
 	int i = 1;
-	int is_rank = 0;
+
+	char last_score[MAX_LINE];
+	char last_lines[MAX_LINE];
+	TetrisGameState last_game;
+	int beenModified = 0;
+	FILE *fp;
 
 	for (int i = 0; i < 5; i++){
 		my_args[i] = (char*) malloc(sizeof(char*));
@@ -56,40 +62,79 @@ int main(int argc, char* argv[]){
                         //run rank with execv, not sure if this comes before piping or after
                 }
 
+		else if (!strcmp(my_args[0], "undo")) {
+			if (beenModified == 1) {
+			       
+				//modify lines	
+				pid_t pid = fork();
+				if (pid) {
+					int res;
+					wait(&res);
+				} else {
+					my_args[0] = "modify";
+					my_args[1] = "score";
+					my_args[2] = last_score;
+					execv("modify", my_args);
+				}
+			
+				//modify score
+				pid = fork();
+				if (pid) {
+					int res;
+					wait(&res);
+				} else {
+					my_args[0] = "modify";
+					my_args[1] = "lines";
+					my_args[2] = last_lines;
+					execv("modify", my_args);
+				}
+
+				printf("Previous quicksave restored.\n");
+			}
+		}
+
 		else {
 
-		pid_t pid = fork();
-		if (pid) {
-			int res;
-			wait(&res);
-		} else {
+			pid_t pid = fork();
+			if (pid) {
+				int res;
+				wait(&res);
+			} else {
 
-			while (arg = strtok(NULL, " ")) {
-				strcpy(my_args[i], arg);
-				i++;
-			}
-
-			//check that i is correct # - bunch of if loops
-			if ((strcmp(my_args[0], "recover") == 0) || (strcmp(my_args[0], "check") == 0)) {
-				if (i != 1) {
-					fprintf(stderr, "Check and recover do not take arguments.\n");
-					return 1;
+				while (arg = strtok(NULL, " ")) {
+					strcpy(my_args[i], arg);
+					i++;
 				}
-			}
 
-			else if (!strcmp(my_args[0], "modify")) {
-				if (i != 3) {
-                                        fprintf(stderr, "Please enter a scoring metric and a number.\n");
-                                        return 1;
-                                }
-			}
+				//check that i is correct # - bunch of if loops
+				if ((strcmp(my_args[0], "recover") == 0) || (strcmp(my_args[0], "check") == 0)) {
+					if (i != 1) {
+						fprintf(stderr, "Check and recover do not take arguments.\n");
+						return 1;
+					}
+				}
+
+				else if (!strcmp(my_args[0], "modify")) {
+					if (i != 3) {
+                                	        fprintf(stderr, "Please enter a scoring metric and a number.\n");
+                                        	return 1;
+                                	}
+
+					fp = fopen("tetris_quicksave.bin", "rb");
+					fread(&last_game, sizeof(last_game), 1, fp);
+					fclose(fp);
+					snprintf(last_score, MAX_LINE, "%d", last_game.score);
+					snprintf(last_lines, MAX_LINE, "%d", last_game.lines);
+					beenModified = 1;
+				}
 			
-			my_args[i] = filepath;
-			my_args[i+1] = NULL;
-			execv(my_args[0], my_args);
+				my_args[i] = filepath;
+				my_args[i+1] = NULL;
+				execv(my_args[0], my_args);
 			
 
-		}}
+			}
+		}
 
 		//still need to free all our shit
 		
