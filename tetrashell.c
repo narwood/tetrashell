@@ -1,3 +1,4 @@
+
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -94,21 +95,22 @@ int main(int argc, char* argv[]) {
 
 		else {
 
-			pid_t pid = fork();
-			if (pid) {
-				if (!strcmp(my_args[0], "rank")){
-					close(pip[1]);
-					if (write(pip[0], filepath, strlen(filepath)) == -1) { 
-						fprintf(stderr, "Write failed. errno: %i\n", errno);
-						return 1;
-					}
-				}
-				int res;
-				wait(&res);
-				if (!strcmp(my_args[0], "rank")){
-					close(pip[0]);
-				}
-			} else {
+
+		pid_t pid = fork();
+		if (pid) {
+			
+			int res;
+			if (!strcmp(my_args[0], "rank")){
+                                close(pip[0]);
+                                if (write(pip[1], filepath, strlen(filepath)) == -1) {
+                                        fprintf(stderr, "Write failed. errno: %i\n", errno);
+                                        return 1;
+                                }
+			close(pip[1]);
+			wait(&res);                        
+}
+		} else {
+
 
 
 				while (arg = strtok(NULL, " ")) {
@@ -201,9 +203,7 @@ int main(int argc, char* argv[]) {
 					}
 					closedir(dr);
 				}
-				else {
-					fprintf(stderr, "Could not open directory");
-				}
+
 
 				printf("If you would like to switch to one of these quicksaves, type (y): ");
 				fgets(command, MAX_LINE, stdin);
