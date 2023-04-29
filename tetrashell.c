@@ -16,6 +16,7 @@ int main(int argc, char* argv[]){
 	char **my_args = malloc(sizeof(char*) * 5);
 	char *program = malloc(sizeof(char*) * 50);
 	int i = 1;
+	int is_rank = 0;
 
 	for (int i = 0; i < 5; i++){
 		my_args[i] = (char*) malloc(sizeof(char*));
@@ -36,40 +37,62 @@ int main(int argc, char* argv[]){
 		arg = strtok(command, " ");
 		strcpy(program, arg);
 		strcpy(my_args[0], arg);
-	/*	while (arg = strtok(NULL, " ")){
-			strcpy(my_args[i], arg);
-			i++;
-		}
-		my_args[i] = NULL;
-*/
-		if(strcmp(my_args[0], "exit") == 0){
+
+		if (strcmp(my_args[0], "exit") == 0) {
 			exit(1);		
 		}
-		printf("line 20\n");
+	
+		if (!strcmp(my_args[0], "rank")) {
+			
+			
+                        if (i != 3) {
+                        	fprintf(stderr, "Please enter a ranking metric and a number.\n");
+                        	return 1;
+                        }
+                        
+			strcpy(my_args[i], "uplink");
+                        my_args[i+1] = NULL;
+                        //pipe filepath to rank stdin??
+                        //run rank with execv, not sure if this comes before piping or after
+                }
 
-		if ((strcmp(my_args[0], "recover") == 0) || (strcmp(my_args[0], "check") == 0)){
-			printf("saw recover or check\n");
-			pid_t pid = fork();
-			if (pid){
-				printf("in recover parent\n");
-				int res;
-				wait(&res);
-			} else {
-				my_args[1] = filepath;
-				my_args[2] = NULL;
-				printf("in recover child\n");
-				execv(my_args[0], my_args);
-			 	printf("you're not supposed to be in here\n");}
+		else {
 
+		pid_t pid = fork();
+		if (pid) {
+			int res;
+			wait(&res);
+		} else {
+
+			while (arg = strtok(NULL, " ")) {
+				strcpy(my_args[i], arg);
+				i++;
 			}
-/*			free(command);
-			printf("freed command\n");
-			program = my_args[0];
-			printf("program name: %s\n", my_args[0]);
-			for (int i = 0; i < 5; i++){
-				free(my_args[i]);
-			}
-			printf("freed args list\n");
-*/		}
 
-		return 0;}
+			//check that i is correct # - bunch of if loops
+			if ((strcmp(my_args[0], "recover") == 0) || (strcmp(my_args[0], "check") == 0)) {
+				if (i != 1) {
+					fprintf(stderr, "Check and recover do not take arguments.\n");
+					return 1;
+				}
+			}
+
+			else if (!strcmp(my_args[0], "modify")) {
+				if (i != 3) {
+                                        fprintf(stderr, "Please enter a scoring metric and a number.\n");
+                                        return 1;
+                                }
+			}
+			
+			my_args[i] = filepath;
+			my_args[i+1] = NULL;
+			execv(my_args[0], my_args);
+			
+
+		}}
+
+		//still need to free all our shit
+		
+	}
+	return 0;
+}
