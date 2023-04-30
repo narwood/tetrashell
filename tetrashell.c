@@ -1,5 +1,6 @@
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -42,6 +43,7 @@ static int SanityCheckState(TetrisGameState *s) {
 }
 
 
+
 int main(int argc, char* argv[]) {
 
 	const int MAX_LINE = 4096;
@@ -58,7 +60,8 @@ int main(int argc, char* argv[]) {
 	char last_score[MAX_LINE];
 	char last_lines[MAX_LINE];
 	TetrisGameState last_game;
-	int beenModified = 0;
+	TetrisGameState rn;
+	int beenModified = 0;	
 	FILE *fp;
 
 	int is_rank = 0;
@@ -75,17 +78,28 @@ int main(int argc, char* argv[]) {
 	printf("Quicksave set.\nEnter your command below:\n");
 
 	while (strcmp(program, "exit") != 1){
+		
+		fp = fopen(filepath, "rb");
+                fread(&rn, sizeof(rn), 1, fp);
+                fclose(fp);
+                int currentScore = rn.score;
+                int currentLines = rn.lines;
+		
 		strncpy(abbr, filepath, 4);
-		printf("%s@tetrashell[%s]> ", getlogin(), abbr);	
+		printf("%s@tetrashell[%s][%i/%i]> ", getlogin(), abbr, currentScore, currentLines);	
 		fgets(command, MAX_LINE, stdin);
 		command[strlen(command) - 1] = '\0';
 		arg = strtok(command, " ");
 		strcpy(program, arg);
 		strcpy(my_args[0], arg);
 
-		if (strcmp(my_args[0], "exit") == 0) {
+		if (!strcmp(my_args[0], "exit")) {
 			exit(1);		
 		}
+		
+		if (!strcmp(my_args[0], "info")) {
+			printf("Current savefile: %s\nScore: %i\nLines: %i\n", filepath, currentScore, currentLines);
+}
 
 		if (!strcmp(my_args[0], "rank")) {
 			if (pipe(pip) == -1){
@@ -140,6 +154,23 @@ int main(int argc, char* argv[]) {
 				printf("Recover quicksaves from a disk image.\n");
 			}
 		}
+
+		if (!strcmp(arg, "switch")){
+			char *oldfile = filepath;
+                        arg = strtok(NULL, " ");
+			fp = fopen(arg, "rb");
+			if (fp == NULL){
+				fprintf(stderr, "File cannot be opened, check validity\n");
+				return 1;}
+                	fread(&rn, sizeof(rn), 1, fp);
+                	fclose(fp);
+			if (!SanityCheckState(&rn)){
+				fprintf(stderr, "This file is insane. Request denied\n");
+				return 1;}
+			strcpy(filepath, arg);
+			printf("Switched current quicksave from %s to %s\n", oldfile, filepath);
+		}
+
 		else {
 
 
@@ -311,6 +342,12 @@ int main(int argc, char* argv[]) {
 					}
 					my_args[i] = filepath;
 					my_args[i+1] = NULL;
+					if (strcmp(my_args[0], "recover") == 0){
+                                                int path = open("/dev/null",  O_WRONLY);
+                                                dup2(path, STDOUT_FILENO);
+                                                dup2(path, STDERR_FILENO);
+                                                close(path);}
+
 					execv(my_args[0], my_args);
 				}
 
@@ -332,16 +369,21 @@ int main(int argc, char* argv[]) {
 				}
 
 				else if (!strcmp(my_args[0], "rank")) {
-					if (i != 3) {
-						fprintf(stderr, "Please enter a ranking metric and a number.\n");
-						return 1;
-					}
 					close(pip[1]);
 					if (dup2(pip[0], 0) == -1) {
 						fprintf(stderr, "invalid file\n");
 						return 1;
 					}
 					close(pip[0]);
+					if (i < 3)
+				{	
+						my_args[2] = "10";
+						i++;
+						if (i == 2){
+							my_args[1] = "score";
+							i++;
+						}
+					}
 					my_args[i] = "uplink";
 					my_args[i+1] = NULL;
 					execv(my_args[0], my_args);
