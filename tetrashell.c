@@ -9,35 +9,36 @@
 #include "tetris.h"
 #include <dirent.h>
 #include <math.h>
+#include <limits.h>
 
 
 static int SanityCheckState(TetrisGameState *s) {
-  int row, col, tmp;
-  char c;
-  tmp = s->location_x;
-  if ((tmp < 0) || (tmp >= BLOCKS_WIDE)) return 0;
-  tmp = s->location_y;
-  if ((tmp < PIECE_START_Y) || (tmp >= BLOCKS_TALL)) return 0;
+	int row, col, tmp;
+	char c;
+	tmp = s->location_x;
+	if ((tmp < 0) || (tmp >= BLOCKS_WIDE)) return 0;
+	tmp = s->location_y;
+	if ((tmp < PIECE_START_Y) || (tmp >= BLOCKS_TALL)) return 0;
 
-  // Important check: make sure the current piece is a valid piece ID.
-  tmp = sizeof(tetris_pieces) / sizeof(const char*);
-  if ((s->current_piece < 0) || (s->current_piece >= tmp)) return 0;
-  if ((s->next_piece < 0) || (s->next_piece >= tmp)) return 0;
+	// Important check: make sure the current piece is a valid piece ID.
+	tmp = sizeof(tetris_pieces) / sizeof(const char*);
+	if ((s->current_piece < 0) || (s->current_piece >= tmp)) return 0;
+	if ((s->next_piece < 0) || (s->next_piece >= tmp)) return 0;
 
-  // Make sure the board contains no invalid characters.
-  for (row = 0; row < BLOCKS_TALL; row++) {
-    for (col = 0; col < BLOCKS_WIDE; col++) {
-      c = s->board[row * BLOCKS_WIDE + col];
-      if ((c < ' ') || (c > '~')) return 0;
-    }
-  }
+	// Make sure the board contains no invalid characters.
+	for (row = 0; row < BLOCKS_TALL; row++) {
+		for (col = 0; col < BLOCKS_WIDE; col++) {
+			c = s->board[row * BLOCKS_WIDE + col];
+			if ((c < ' ') || (c > '~')) return 0;
+		}
+	}
 
-  // There are clearly more sanity checks we can do, but these are all that
-  // we'll test for now. Ideas for later:
-  // - No completed lines
-  // - Score is at least lines * 100.
+	// There are clearly more sanity checks we can do, but these are all that
+	// we'll test for now. Ideas for later:
+	// - No completed lines
+	// - Score is at least lines * 100.
 
-  return 1;
+	return 1;
 }
 
 
@@ -120,170 +121,180 @@ int main(int argc, char* argv[]) {
 				printf("Previous quicksave restored.\n");
 			}
 		}
-/*		if (!strcmp(arg, "info")){
-			printf("Current savefile: %s\nScore: %i\nLines: %i\n", filepath, filepath->score, filepath->lines)
-		}*/
+		/*		if (!strcmp(arg, "info")){
+				printf("Current savefile: %s\nScore: %i\nLines: %i\n", filepath, filepath->score, filepath->lines)
+				}*/
 		if (!strcmp(arg, "help")){
 			arg = strtok(NULL, " ");
 			if (!strcmp(arg, "check")){
 				printf("Check determines if the inputted quicksave is valid or not.\n");
 			} else if (!strcmp(arg, "modify")){
-                                printf("Modify allows you to alter the score and lines values of your quicksave.\n");
-                        } else if (!strcmp(arg, "rank")){
-                                printf("Rank displays your quicksave on the internal leaderboard.\n");
-                        } else if (!strcmp(arg, "exit")){
-                                printf("Exit will end the program.\n");
-                        } else if (!strcmp(arg, "undo")){
-                                printf("Undo will revert your last modify change.\n");
-                        } else if (!strcmp(arg, "recover")){
-                                printf("Recover quicksaves from a disk image.\n");
-                        }
+				printf("Modify allows you to alter the score and lines values of your quicksave.\n");
+			} else if (!strcmp(arg, "rank")){
+				printf("Rank displays your quicksave on the internal leaderboard.\n");
+			} else if (!strcmp(arg, "exit")){
+				printf("Exit will end the program.\n");
+			} else if (!strcmp(arg, "undo")){
+				printf("Undo will revert your last modify change.\n");
+			} else if (!strcmp(arg, "recover")){
+				printf("Recover quicksaves from a disk image.\n");
+			}
 		}
 		else {
 
 
-		pid_t pid = fork();
-		if (pid) {
-			
-			int res;
-			if (!strcmp(my_args[0], "rank")){
-                                close(pip[0]);
-                                if (write(pip[1], filepath, strlen(filepath)) == -1) {
-                                        fprintf(stderr, "Write failed. errno: %i\n", errno);
-                                        return 1;
-                                }
-			close(pip[1]);}
-			wait(&res);                 
-			if (!strcmp(my_args[0], "recover")) {
-                                DIR *dr;
-                                struct dirent *en;
+			pid_t pid = fork();
+			if (pid) {
 
-                                //get fileCount, maxNameSize
-                                int fileCount = 1;
-                                int maxNameSize = 0;
-                                dr = opendir("recovered"); //open dir
-                                if (dr) {
-                                        while ((en = readdir(dr)) != NULL) {
-                                                fileCount += 1;
-                                                if (strlen(en->d_name) > maxNameSize) {
-                                                        maxNameSize = strlen(en->d_name);
-                                                }
-                                        }
-                                        maxNameSize += 10;
-                                        closedir(dr); //close all directory
-                                }
-                                else {
-					fprintf(stderr, "Could not open directory\n");
-                                }
+				int res;
+				if (!strcmp(my_args[0], "rank")){
+					close(pip[0]);
+					if (write(pip[1], filepath, strlen(filepath)) == -1) {
+						fprintf(stderr, "Write failed. errno: %i\n", errno);
+						return 1;
+					}
+					close(pip[1]);}
+				wait(&res);                 
+				if (!strcmp(my_args[0], "recover")) {
+					DIR *dr;
+					struct dirent *en;
 
-                                //get number of digits in fileCount
-                                int power = 1;
-                                while (fileCount >= pow(10, power)) {
-                                        power++;
-                                }
-                                int maxDigits = power;
+					//get fileCount, maxNameSize
+					int fileCount = 1;
+					int maxNameSize = 0;
+					dr = opendir("recovered"); //open dir
+					if (dr) {
+						while ((en = readdir(dr)) != NULL) {
+							fileCount += 1;
+							if (strlen(en->d_name) > maxNameSize) {
+								maxNameSize = strlen(en->d_name);
+							}
+						}
+						maxNameSize += 10;
+						closedir(dr); //close all directory
+					}
+					else {
+						fprintf(stderr, "Could not open directory\n");
+					}
 
-                                //get number of digits in maxScore
-                                power = 1;
-                                while (sizeof(unsigned) >= pow(10, power)) {
-                                        power++;
-                                }
-                                int maxScoreDigits = power;
+					//get number of digits in fileCount
+					int power = 1;
+					while (fileCount >= pow(10, power)) {
+						power++;
+					}
+					int maxDigits = power;
 
-                                //print title
-                                for (int i = 0; i < (maxDigits + maxNameSize + 3 + 2*maxScoreDigits); i++) {
-                                        printf("-");
-                                }
-                                printf("\n");
-                                printf("# ");
-                                for (int i = 0; i < maxDigits; i++) {
-                                        printf(" ");
-                                }
-                                printf("Filepath");
-                                for (int i = 0; i < (maxNameSize - 7); i++) {
-                                        printf(" ");
-                                }
-                                printf("Score");
-                                for (int i = 0; i < (maxScoreDigits - 4); i++) {
-                                        printf(" ");
-                                }
-                                printf("Lines\n");
-                                for (int i = 0; i < (maxDigits + maxNameSize + 3 + 2*maxScoreDigits); i++) {
-                                        printf("-");
-                                }
-                                printf("\n");
-
-                                //loop again, add to array and print
-                                char **fileNames = malloc(sizeof(char*) * fileCount);
-                                int index = 0;
-                                TetrisGameState state;
-                                dr = opendir("recovered");
-                                if (dr) {
-                                        while ((en = readdir(dr)) != NULL) {
-                                                fileNames[index] = en->d_name;
-
-						char fileToOpen[MAX_LINE];
-						snprintf(fileToOpen, MAX_LINE, "./recovered/%s", en->d_name);
-                                                fp = fopen(fileToOpen, "rb");
-                                                if(fread(&state, sizeof(state), 1, fp) == -1){
-							fprintf(stderr, "Could not read file\n");}
-                                                fclose(fp);
-
-                                                //printing time :)
-                                                printf("%d ", index);
-                                                power = 1;
-                                                while (index >= pow(10, power)) {
-                                                        power++;
-                                                }
-                                                for (int i = 0; i < maxDigits-power; i++) {
-                                                        printf(" ");
-                                                }
-
-                                                printf("recovered/%s\n ", en->d_name);
-                                                for (int i = 0; i < (maxNameSize - strlen(en->d_name)); i++) {
-                                                        printf(" ");
-                                                }
-
-                                                printf("%d ", state.score);
-                                                power = 1;
-                                                while ((state.score) >= pow(10, power)) {
-                                                        power++;
-                                                }
-                                                for (int i = 0; i < maxScoreDigits-power; i++) {
-                                                       printf(" ");
-                                                }
-                                                printf(" ");
-
-                                                printf("%d", state.lines);
-                                                power = 1;
-
-                                                index += 1;
-                                        }
-                                        closedir(dr);
-                                }
+					//get number of digits in maxScore
+					power = 1;
+					while (UINT_MAX >= pow(10, power)) {
+						power++;
+					}
+					int maxScoreDigits = power;
+					if (maxScoreDigits < 5) {
+						maxScoreDigits = 5;
+					}
 
 
-                                printf("If you would like to switch to one of these quicksaves, type (y): ");
-                                fgets(command, MAX_LINE, stdin);
-                                command[strlen(command) - 1] = '\0';
-                                if (!strcmp(command, "y")) {
-                                        printf("Which quicksave? (Enter a number): ");
-                                        fgets(command, MAX_LINE, stdin);
-                                        command[strlen(command)-1] = '\0';
-                                        int switchSave = atoi(command);
-                                        if (switchSave < 1 || switchSave > fileCount) {
-                                                fprintf(stderr, "Number not in range of recovered quicksaves.\n");
-                                        }
-                                        else {
-                                                filepath = fileNames[switchSave];
-                                                printf("Done! Current quicksave is now %s\n", filepath);
-                                        }
-                                }
-                                else {
-                                        printf("Okay, quicksave not switched.\n");
-                                }
-}
-		} else {
+					//print title
+					for (int i = 0; i < (maxDigits + maxNameSize + 3 + 2*maxScoreDigits); i++) {
+						printf("-");
+					}
+					printf("\n");
+					printf("#");
+					for (int i = 0; i < maxDigits; i++) {
+						printf(" ");
+					}
+					printf("Filepath");
+					for (int i = 0; i < (maxNameSize - 7); i++) {
+						printf(" ");
+					}
+					printf("Score");
+					for (int i = 0; i < (maxScoreDigits - 4); i++) {
+						printf(" ");
+					}
+					printf("Lines\n");
+					for (int i = 0; i < (maxDigits + maxNameSize + 3 + 2*maxScoreDigits); i++) {
+						printf("-");
+					}
+					printf("\n");
+
+					//loop again, add to array and print
+					char **fileNames = malloc(sizeof(char) * MAX_LINE * fileCount);
+					int index = 1;
+					TetrisGameState state;
+					dr = opendir("recovered");
+					if (dr) {
+						while ((en = readdir(dr)) != NULL) {
+
+							if(strcmp(en->d_name, ".") && strcmp(en->d_name, "..")) {
+
+								fileNames[index-1] = en->d_name;
+								char fileToOpen[MAX_LINE];
+								snprintf(fileToOpen, MAX_LINE, "./recovered/%s", en->d_name);
+
+								fp = fopen(fileToOpen, "rb");
+								if(fread(&state, sizeof(state), 1, fp) == -1){
+									fprintf(stderr, "Could not read file\n");}
+								fclose(fp);
+
+								//printing time :)
+								printf("%d ", index);
+								power = 1;
+								while (index >= pow(10, power)) {
+									power++;
+								}
+								for (int i = 0; i < maxDigits-power; i++) {
+									printf(" ");
+								}
+
+								printf("recovered/%s ", en->d_name);
+								for (int i = 0; i < (maxNameSize - (10 + strlen(en->d_name))); i++) {
+									printf(" ");
+								}
+
+								printf("%d ", state.score);
+								power = 1;
+								while ((state.score) >= pow(10, power)) {
+									power++;
+								}
+								for (int i = 0; i < maxScoreDigits-power; i++) {
+									printf(" ");
+								}
+								printf(" ");
+
+								printf("%d\n", state.lines);
+
+								index += 1;
+
+							}
+						}
+						closedir(dr);
+					}
+
+
+					printf("If you would like to switch to one of these quicksaves, type (y): ");
+					fgets(command, MAX_LINE, stdin);
+					command[strlen(command) - 1] = '\0';
+					if (!strcmp(command, "y")) {
+						printf("Which quicksave? (Enter a number): ");
+						fgets(command, MAX_LINE, stdin);
+						command[strlen(command)-1] = '\0';
+						int switchSave = atoi(command);
+						if (switchSave < 1 || switchSave > fileCount) {
+							fprintf(stderr, "Number not in range of recovered quicksaves.\n");
+						}
+						else {
+							char setFile[MAX_LINE];
+                                                        snprintf(setFile, MAX_LINE, "./recovered/%s", fileNames[switchSave-1]);
+							filepath = setFile;
+							printf("Done! Current quicksave is now %s\n", filepath);
+						}
+					}
+					else {
+						printf("Okay, quicksave not switched.\n");
+					}
+				}
+			} else {
 
 
 
@@ -298,13 +309,9 @@ int main(int argc, char* argv[]) {
 						fprintf(stderr, "Check and recover do not take arguments.\n");
 						return 1;
 					}
-					printf("trying to recover\n");
 					my_args[i] = filepath;
-					printf("filepath added\n");
 					my_args[i+1] = NULL;
-					printf("set last to null\n");
-                                        execv(my_args[0], my_args);
-					printf("hmmm\n");
+					execv(my_args[0], my_args);
 				}
 
 				else if (!strcmp(my_args[0], "modify")) {
@@ -321,7 +328,7 @@ int main(int argc, char* argv[]) {
 					beenModified = 1;
 					my_args[i] = filepath;
 					my_args[i+1] = NULL;
-                                        execv(my_args[0], my_args);
+					execv(my_args[0], my_args);
 				}
 
 				else if (!strcmp(my_args[0], "rank")) {
@@ -337,142 +344,13 @@ int main(int argc, char* argv[]) {
 					close(pip[0]);
 					my_args[i] = "uplink";
 					my_args[i+1] = NULL;
-                                	execv(my_args[0], my_args);
+					execv(my_args[0], my_args);
 				}
 
 			}
-			
-/*///////////////////////////////////////////////////////////////////////////////////			//Anything you want to execute after execv goes here
-			if (!strcmp(my_args[0], "recover")) {
-				
-				DIR *dr;
-        			struct dirent *en;
 
-   				//get fileCount, maxNameSize
-				int fileCount = 1;
-				int maxNameSize = 0;
-				dr = opendir("recovered"); //open dir
-   				if (dr) {
-      					while ((en = readdir(dr)) != NULL) {
-      						fileCount += 1;
-						if (strlen(en->d_name) > maxNameSize) {
-							maxNameSize = strlen(en->d_name);
-						}
-					}
-					maxNameSize += 10;
-      					closedir(dr); //close all directory
-   				}
-				else {
-                                        fprintf(stderr, "Could not open directory");
-                                }
-
-				//get number of digits in fileCount
-				int power = 1;
-				while (fileCount >= pow(10, power)) {
-					power++;
-				}	
-				int maxDigits = power;
-
-				//get number of digits in maxScore
-				power = 1;
-				while (sizeof(unsigned) >= pow(10, power)) {
-					power++;
-				}
-				int maxScoreDigits = power;
-
-				//print title
-				for (int i = 0; i < (maxDigits + maxNameSize + 3 + 2*maxScoreDigits); i++) {
-                                	printf("-");
-                                }
-                                printf("\n");
-                                printf("# ");
-                                for (int i = 0; i < maxDigits; i++) {
-                                	printf(" ");
-                                }
-                                printf("Filepath");
-				for (int i = 0; i < (maxNameSize - 7); i++) {
-					printf(" ");
-				}
-				printf("Score");
-				for (int i = 0; i < (maxScoreDigits - 4); i++) {
-					printf(" ");
-				}
-				printf("Lines\n");
-				for (int i = 0; i < (maxDigits + maxNameSize + 3 + 2*maxScoreDigits); i++) {
-                                        printf("-");
-                                }
-                                printf("\n");
-
-				//loop again, add to array and print
-				char **fileNames = malloc(sizeof(char*) * fileCount);
-			      	int index = 0;
-				TetrisGameState *state;	
-				dr = opendir("recovered");
-				if (dr) {
-					while ((en = readdir(dr)) != NULL) {
-						fileNames[index] = en->d_name;
-						
-						fp = fopen(en->d_name, "rb");
-                                        	fread(&state, sizeof(state), 1, fp);
-                                        	fclose(fp);
-
-						//printing time :)
-						printf("%d ", index);
-						power = 1;
-						while (index >= pow(10, power)) {
-							power++;
-						}
-						for (int i = 0; i < maxDigits-power; i++) {
-							printf(" ");
-						}
-						
-						printf("recovered/%s\n ", en->d_name);
-						for (int i = 0; i < (maxNameSize - strlen(en->d_name)); i++) {
-							printf(" ");
-						}
-						
-						printf("%d ", state->score);
-						power = 1;
-						while ((state->score) >= pow(10, power)) {
-							power++;
-						}
-						for (int i = 0; i < maxScoreDigits-power; i++) {
-						       printf(" ");
-					       	}
-				 		printf(" ");		
-						
-						printf("%d", state->lines);
-						power = 1;
-
-						index += 1;	
-					}
-					closedir(dr);
-				}
-
-
-				printf("If you would like to switch to one of these quicksaves, type (y): ");
-				fgets(command, MAX_LINE, stdin);
-                		command[strlen(command) - 1] = '\0';
-				if (!strcmp(command, "y")) {
-					printf("Which quicksave? (Enter a number): ");
-					fgets(command, MAX_LINE, stdin);
-					command[strlen(command)-1] = '\0';
-					int switchSave = atoi(command);
-					if (switchSave < 1 || switchSave > fileCount) {
-						fprintf(stderr, "Number not in range of recovered quicksaves.\n");
-					}
-					else {
-						filepath = fileNames[switchSave];
-						printf("Done! Current quicksave is now %s\n", filepath);
-					}
-				}
-   				else {
-					printf("Okay, quicksave not switched.\n");
-				}
-			}
-*//////////////////////////////////////////////////////////////////////////////////////////////
 		}
-}
+	}
 
 	//still need to free all our shit
 
