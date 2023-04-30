@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include "tetris.h"
 #include <dirent.h>
+#include <math.h>
 
 int main(int argc, char* argv[]) {
 
@@ -149,7 +150,7 @@ int main(int argc, char* argv[]) {
 						return 1;
 					}
 
-					fp = fopen("tetris_quicksave.bin", "rb");
+					fp = fopen(filepath, "rb");
 					fread(&last_game, sizeof(last_game), 1, fp);
 					fclose(fp);
 					snprintf(last_score, MAX_LINE, "%d", last_game.score);
@@ -184,7 +185,7 @@ int main(int argc, char* argv[]) {
 				DIR *dr;
         			struct dirent *en;
 
-   				//get fileCount
+   				//get fileCount, maxNameSize
 				int fileCount = 1;
 				int maxNameSize = 0;
 				dr = opendir("recovered"); //open dir
@@ -195,24 +196,91 @@ int main(int argc, char* argv[]) {
 							maxNameSize = strlen(en->d_name);
 						}
 					}
+					maxNameSize += 10;
       					closedir(dr); //close all directory
    				}
 				else {
                                         fprintf(stderr, "Could not open directory");
                                 }
 
-				//get number of digits in fileCount, max chars in fileNames
-				
+				//get number of digits in fileCount
+				int power = 1;
+				while (fileCount >= pow(10, power)) {
+					power++;
+				}	
+				int maxDigits = power;
+
+				//get number of digits in maxScore
+				power = 1;
+				while (sizeof(unsigned) >= pow(10, power)) {
+					power++;
+				}
+				int maxScoreDigits = power;
+
+				//print title
+				for (int i = 0; i < (maxDigits + maxNameSize + 3 + 2*maxScoreDigits); i++) {
+                                	printf("-");
+                                }
+                                printf("\n");
+                                printf("# ");
+                                for (int i = 0; i < maxDigits; i++) {
+                                	printf(" ");
+                                }
+                                printf("Filepath");
+				for (int i = 0; i < (maxNameSize - 7); i++) {
+					printf(" ");
+				}
+				printf("Score");
+				for (int i = 0; i < (maxScoreDigits - 4); i++) {
+					printf(" ");
+				}
+				printf("Lines\n");
+				for (int i = 0; i < (maxDigits + maxNameSize + 3 + 2*maxScoreDigits); i++) {
+                                        printf("-");
+                                }
+                                printf("\n");
+
 				//loop again, add to array and print
 				char **fileNames = malloc(sizeof(char*) * fileCount);
-			      	int index = 0;	
+			      	int index = 0;
+				TetrisGameState *state;	
 				dr = opendir("recovered");
 				if (dr) {
 					while ((en = readdir(dr)) != NULL) {
 						fileNames[index] = en->d_name;
 						
+						fp = fopen(en->d_name, "rb");
+                                        	fread(&state, sizeof(state), 1, fp);
+                                        	fclose(fp);
+
 						//printing time :)
-						printf("%d %s\n", fileCount, en->d_name); //print all directory name
+						printf("%d ", index);
+						power = 1;
+						while (index >= pow(10, power)) {
+							power++;
+						}
+						for (int i = 0; i < maxDigits-power; i++) {
+							printf(" ");
+						}
+						
+						printf("recovered/%s\n ", en->d_name);
+						for (int i = 0; i < (maxNameSize - strlen(en->d_name)); i++) {
+							printf(" ");
+						}
+						
+						printf("%d ", state->score);
+						power = 1;
+						while ((state->score) >= pow(10, power)) {
+							power++;
+						}
+						for (int i = 0; i < maxScoreDigits-power; i++) {
+						       printf(" ");
+					       	}
+				 		printf(" ");		
+						
+						printf("%d", state->lines);
+						power = 1;
+
 						index += 1;	
 					}
 					closedir(dr);
@@ -231,7 +299,7 @@ int main(int argc, char* argv[]) {
 						fprintf(stderr, "Number not in range of recovered quicksaves.\n");
 					}
 					else {
-						filepath = fileNames[switchSave-1];
+						filepath = fileNames[switchSave];
 						printf("Done! Current quicksave is now %s\n", filepath);
 					}
 				}
