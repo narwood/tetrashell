@@ -1,4 +1,3 @@
-
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -96,13 +95,13 @@ int main(int argc, char* argv[]) {
 	printf("Quicksave set.\nEnter your command below:\n");
 
 	while (strcmp(program, "exit") != 1){
-		
+
 		fp = fopen(filepath, "rb");
-                fread(&rn, sizeof(rn), 1, fp);
-                fclose(fp);
-                int currentScore = rn.score;
-                int currentLines = rn.lines;
-		
+		fread(&rn, sizeof(rn), 1, fp);
+		fclose(fp);
+		int currentScore = rn.score;
+		int currentLines = rn.lines;
+
 		strncpy(abbr, filepath, 4);
 		printf("%s@tetrashell[%s][%i/%i]> ", getlogin(), abbr, currentScore, currentLines);	
 		fgets(command, MAX_LINE, stdin);
@@ -114,10 +113,10 @@ int main(int argc, char* argv[]) {
 		if (!strcmp(my_args[0], "exit")) {
 			exit(1);		
 		}
-		
+
 		if (!strcmp(my_args[0], "info")) {
 			printf("Current savefile: %s\nScore: %i\nLines: %i\n", filepath, currentScore, currentLines);
-}
+		}
 
 		if (!strcmp(my_args[0], "rank")) {
 			if (pipe(pip) == -1){
@@ -175,13 +174,13 @@ int main(int argc, char* argv[]) {
 
 		if (!strcmp(arg, "switch")){
 			char *oldfile = filepath;
-                        arg = strtok(NULL, " ");
+			arg = strtok(NULL, " ");
 			fp = fopen(arg, "rb");
 			if (fp == NULL){
 				fprintf(stderr, "File cannot be opened, check validity\n");
 				return 1;}
-                	fread(&rn, sizeof(rn), 1, fp);
-                	fclose(fp);
+			fread(&rn, sizeof(rn), 1, fp);
+			fclose(fp);
 			if (!SanityCheckState(&rn)){
 				fprintf(stderr, "This file is insane. Request denied\n");
 				return 1;}
@@ -270,10 +269,22 @@ int main(int argc, char* argv[]) {
 					//loop again, add to array and print
 					char **fileNames = malloc(sizeof(char) * MAX_LINE * fileCount);
 					int index = 1;
+					int color = 35;
 					TetrisGameState state;
 					dr = opendir("recovered");
 					if (dr) {
 						while ((en = readdir(dr)) != NULL) {
+							if (color == 31){
+								color = 33;
+							} else if (color == 33){
+								color = 32;
+							} else if (color == 32){
+								color = 34;
+							} else if (color == 34){
+								color = 35;
+							} else if (color == 35){
+								color = 31;
+							}
 
 							if(strcmp(en->d_name, ".") && strcmp(en->d_name, "..")) {
 
@@ -287,7 +298,7 @@ int main(int argc, char* argv[]) {
 								fclose(fp);
 
 								//printing time :)
-								printf("%d ", index);
+								printf("\033[%dm%d ", color, index);
 								power = 1;
 								while (index >= pow(10, power)) {
 									power++;
@@ -296,12 +307,12 @@ int main(int argc, char* argv[]) {
 									printf(" ");
 								}
 
-								printf("recovered/%s ", en->d_name);
+								printf("\033[%dmrecovered/%s ", color, en->d_name);
 								for (int i = 0; i < (maxNameSize - (10 + strlen(en->d_name))); i++) {
 									printf(" ");
 								}
 
-								printf("%d ", state.score);
+								printf("\033[%dm%d ", color, state.score);
 								power = 1;
 								while ((state.score) >= pow(10, power)) {
 									power++;
@@ -311,7 +322,7 @@ int main(int argc, char* argv[]) {
 								}
 								printf(" ");
 
-								printf("%d\n", state.lines);
+								printf("\033[%dm%d\033[0m\n", color, state.lines);
 
 								index += 1;
 
@@ -319,7 +330,6 @@ int main(int argc, char* argv[]) {
 						}
 						closedir(dr);
 					}
-
 
 					printf("If you would like to switch to one of these quicksaves, type (y): ");
 					fgets(command, MAX_LINE, stdin);
@@ -334,7 +344,7 @@ int main(int argc, char* argv[]) {
 						}
 						else {
 							char setFile[MAX_LINE];
-                                                        snprintf(setFile, MAX_LINE, "./recovered/%s", fileNames[switchSave-1]);
+							snprintf(setFile, MAX_LINE, "./recovered/%s", fileNames[switchSave-1]);
 							filepath = setFile;
 							printf("Done! Current quicksave is now %s\n", filepath);
 						}
@@ -361,10 +371,10 @@ int main(int argc, char* argv[]) {
 					my_args[i] = filepath;
 					my_args[i+1] = NULL;
 					if (strcmp(my_args[0], "recover") == 0){
-                                                int path = open("/dev/null",  O_WRONLY);
-                                                dup2(path, STDOUT_FILENO);
-                                                dup2(path, STDERR_FILENO);
-                                                close(path);}
+						int path = open("/dev/null",  O_WRONLY);
+						dup2(path, STDOUT_FILENO);
+						dup2(path, STDERR_FILENO);
+						close(path);}
 
 					execv(my_args[0], my_args);
 				}
@@ -394,7 +404,7 @@ int main(int argc, char* argv[]) {
 					}
 					close(pip[0]);
 					if (i < 3)
-				{	
+					{	
 						my_args[2] = "10";
 						i++;
 						if (i == 2){
