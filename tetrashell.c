@@ -72,7 +72,25 @@ int main(int argc, char* argv[]) {
 		my_args[i] = (char*) malloc(sizeof(char*));
 	}
 
-	printf("Welcome to tetrashell!\nEnter the path of the quicksave you would like to hack: ");
+	printf("Welcome to \n");
+	
+    	char c;
+	char s[2];
+    	FILE* flower = fopen("flower.txt", "r");
+    	if (flower == NULL) {
+        	printf("File could not be opened\n");
+        	return 1;
+    	}	
+    	while ((c = fgetc(flower)) != EOF) {
+        	snprintf(s, sizeof(s), "%c", c);
+		if (!strcmp(s, "(") || !strcmp(s, ")")) {
+			printf("\033[33m%c", c);
+		}
+		else printf("\033[34m%c", c);
+    	}
+    	fclose(flower);
+    
+	printf("\033[0mEnter the path of the quicksave you would like to hack: ");
 	fgets(filepath, 4096, stdin);
 	filepath[strlen(filepath) - 1] = '\0';
 	printf("Quicksave set.\nEnter your command below:\n");
