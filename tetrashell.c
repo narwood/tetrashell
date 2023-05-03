@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
 
 	const int MAX_LINE = 4096;
 	handled = 0;
-	
+
 	char filepath[MAX_LINE];
 	char command[MAX_LINE];
 	char *arg = malloc(sizeof(char) * MAX_LINE);
@@ -181,7 +181,11 @@ int main(int argc, char* argv[]) {
 				printf("Undo will revert your last modify change.\n");
 			} else if (!strcmp(arg, "recover")){
 				printf("Recover quicksaves from a disk image.\n");
-			}
+			} else if (!strcmp(arg, "train")){
+                                printf("Generates hex codes to translate into binary.\n");
+                        } else if (!strcmp(arg, "info")){
+                                printf("Reveals information about the current quicksave.\n");
+                        }
 		}
 
 		if (!strcmp(arg, "switch")){
@@ -200,7 +204,7 @@ int main(int argc, char* argv[]) {
 			printf("Switched current quicksave from %s to %s\n", oldfile, filepath);
 		}
 
-		if (!strcmp(arg, "train")) {
+		else if (!strcmp(arg, "train")) {
 			char guess[MAX_LINE];
 			int guessnum;
 			int difficulty = 2;
@@ -234,7 +238,6 @@ int main(int argc, char* argv[]) {
 				if ('y' != command[0]){
 					replay = 0;}
 			}}
-
 		else {
 
 
@@ -477,15 +480,10 @@ int main(int argc, char* argv[]) {
 			}
 
 		}
-	if (!strcmp(program, "exit")){
-		break;
-	}
 	}
 	//end while loop
 bottom:
 
-//	free(filepath);
-//	free(command);
 	free(arg);
 	free(program);
 	for (int i = 0; i < 5; i++) {

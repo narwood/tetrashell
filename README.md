@@ -10,7 +10,6 @@
   * Switch current quicksave
   * Help
   * Save info
-  * Undo
   * Train w/ difficulty adapting
 
 * Improved prompt:
