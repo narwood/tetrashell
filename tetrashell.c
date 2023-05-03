@@ -41,17 +41,19 @@ static int SanityCheckState(TetrisGameState *s) {
 	return 1;
 }
 
+static int handled;
 
 
 int main(int argc, char* argv[]) {
 
 	const int MAX_LINE = 4096;
+	handled = 0;
 
 	char *filepath = malloc(sizeof(char) * MAX_LINE);
 	char *command = malloc(sizeof(char) * MAX_LINE);
-	char *arg = malloc(sizeof(char) * 50);
+	char *arg = malloc(sizeof(char) * MAX_LINE);
 	char **my_args = malloc(sizeof(char*) * 5);
-	char *program = malloc(sizeof(char*) * 50);
+	char *program = malloc(sizeof(char*) * MAX_LINE);
 	char abbr[5];
 	int i = 1;
 
@@ -72,45 +74,45 @@ int main(int argc, char* argv[]) {
 	}
 
 	printf("Welcome to \n");
-	
-    	char c;
+
+	char c;
 	char s[2];
-    	FILE* flower = fopen("flower.txt", "r");
-    	if (flower == NULL) {
-        	printf("File could not be opened\n");
-        	goto handle_error;
-    	}	
-    	while ((c = fgetc(flower)) != EOF) {
-        	snprintf(s, sizeof(s), "%c", c);
+	FILE* flower = fopen("flower.txt", "r");
+	if (flower == NULL) {
+		printf("File could not be opened\n");
+		goto bottom;
+	}	
+	while ((c = fgetc(flower)) != EOF) {
+		snprintf(s, sizeof(s), "%c", c);
 		if (!strcmp(s, "(") || !strcmp(s, ")")) {
 			printf("\033[33m%c", c);
 		}
 		else printf("\033[34m%c", c);
-    	}
-    	fclose(flower);
-    
+	}
+	fclose(flower);
+
 	printf("\033[0mEnter the path of the quicksave you would like to hack: ");
 	fgets(filepath, 4096, stdin);
 	filepath[strlen(filepath) - 1] = '\0';
 	fp = fopen(filepath, "rb");
-        if (fp == NULL) {
-        	fprintf(stderr, "Could not open quicksave.\n");
-                goto handle_error;
-        }
-        printf("Quicksave set.\nEnter your command below:\n");
-        fclose(fp);
-	
-	
+	if (fp == NULL) {
+		fprintf(stderr, "Could not open quicksave.\n");
+		goto bottom;
+	}
+	printf("Quicksave set.\nEnter your command below:\n");
+	fclose(fp);
+
+
 	while (strcmp(program, "exit") != 1){
 
 		fp = fopen(filepath, "rb");
 		if (fp == NULL) {
-                	fprintf(stderr, "Could not open quicksave.\n");
-                	goto handle_error;
-        	}
+			fprintf(stderr, "Could not open quicksave.\n");
+			goto bottom;
+		}
 		fread(&rn, sizeof(rn), 1, fp);
-        	fclose(fp);
-		
+		fclose(fp);
+
 		int currentScore = rn.score;
 		int currentLines = rn.lines;
 
@@ -133,7 +135,7 @@ int main(int argc, char* argv[]) {
 		if (!strcmp(my_args[0], "rank")) {
 			if (pipe(pip) == -1){
 				fprintf(stderr, "Pipe failed\n");
-				goto handle_error;
+				goto bottom;
 			}			                        
 		}
 		if (!strcmp(my_args[0], "undo")) {
@@ -198,11 +200,11 @@ int main(int argc, char* argv[]) {
 		}
 
 		if (!strcmp(arg, "train")) {
-			
-				int difficulty = 1;
-				int r = (rand() % (int)(pow(10, difficulty) - pow(10, difficulty-1) + 1) + pow(10, difficulty-1));
-		       		printf("%d\n", r);
-				
+
+			int difficulty = 1;
+			int r = (rand() % (int)(pow(10, difficulty) - pow(10, difficulty-1) + 1) + pow(10, difficulty-1));
+			printf("%d\n", r);
+
 		}
 
 		else {
@@ -216,7 +218,7 @@ int main(int argc, char* argv[]) {
 					close(pip[0]);
 					if (write(pip[1], filepath, strlen(filepath)) == -1) {
 						fprintf(stderr, "Write failed. errno: %i\n", errno);
-						goto handle_error;
+						goto bottom;
 					}
 					close(pip[1]);}
 				wait(&res);                 
@@ -227,6 +229,14 @@ int main(int argc, char* argv[]) {
 					//get fileCount, maxNameSize
 					int fileCount = 1;
 					int maxNameSize = 0;
+
+					char* file_extension = strrchr(filepath, '.');
+					if (strcmp(file_extension, ".img") && strcmp(file_extension, ".iso") && strcmp(file_extension, ".dmg") && strcmp(file_extension, ".cdr")) {
+						fprintf(stderr, "Recover can only be run on a disk image.\n");
+						goto bottom;
+					}
+
+
 					dr = opendir("recovered"); //open dir
 					if (dr) {
 						while ((en = readdir(dr)) != NULL) {
@@ -240,7 +250,7 @@ int main(int argc, char* argv[]) {
 					}
 					else {
 						fprintf(stderr, "Could not open directory\n");
-						goto handle_error;
+						goto bottom;
 					}
 
 					//get number of digits in fileCount
@@ -385,7 +395,7 @@ int main(int argc, char* argv[]) {
 				if ((strcmp(my_args[0], "recover") == 0) || (strcmp(my_args[0], "check") == 0)) {
 					if (i != 1) {
 						fprintf(stderr, "Check and recover do not take arguments.\n");
-						goto handle_error;
+						goto bottom;
 					}
 					my_args[i] = filepath;
 					my_args[i+1] = NULL;
@@ -401,7 +411,7 @@ int main(int argc, char* argv[]) {
 				else if (!strcmp(my_args[0], "modify")) {
 					if (i != 3) {
 						fprintf(stderr, "Please enter a scoring metric and a number.\n");
-						goto handle_error;
+						goto bottom;
 					}
 
 					fp = fopen(filepath, "rb");
@@ -419,7 +429,7 @@ int main(int argc, char* argv[]) {
 					close(pip[1]);
 					if (dup2(pip[0], 0) == -1) {
 						fprintf(stderr, "invalid file\n");
-						goto handle_error;
+						goto bottom;
 					}
 					close(pip[0]);
 					if (i < 3)
@@ -439,26 +449,19 @@ int main(int argc, char* argv[]) {
 			}
 
 		}
-		handle_error:
-                if (sizeof(filepath)) {free(filepath);}
-                if (sizeof(command)) {free(command);}
-                if (sizeof(arg)) {free(arg);}
-                if (sizeof(my_args)) {free(my_args);}
-                if (sizeof(program)) {free(program);}
-                if (sizeof(my_args[1])) {
-                        for (int i = 0; i < 5; i++) {
-                                free(my_args[i]);
-                        }
-                }
-                return 1;
+		
+	}
+	//end while loop
+	bottom:
 
         free(filepath);
         free(command);
         free(arg);
-        free(my_args);
         free(program);
-	
+	for (int i = 0; i < 5; i++) {
+		free(my_args[i]);
 	}
+	free(my_args);	
 
 	return 0;
 }
