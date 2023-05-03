@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
     	FILE* flower = fopen("flower.txt", "r");
     	if (flower == NULL) {
         	printf("File could not be opened\n");
-        	return 1;
+        	goto handle_error;
     	}	
     	while ((c = fgetc(flower)) != EOF) {
         	snprintf(s, sizeof(s), "%c", c);
@@ -92,13 +92,25 @@ int main(int argc, char* argv[]) {
 	printf("\033[0mEnter the path of the quicksave you would like to hack: ");
 	fgets(filepath, 4096, stdin);
 	filepath[strlen(filepath) - 1] = '\0';
-	printf("Quicksave set.\nEnter your command below:\n");
-
+	fp = fopen(filepath, "rb");
+        if (fp == NULL) {
+        	fprintf(stderr, "Could not open quicksave.\n");
+                goto handle_error;
+        }
+        printf("Quicksave set.\nEnter your command below:\n");
+        fclose(fp);
+	
+	
 	while (strcmp(program, "exit") != 1){
 
 		fp = fopen(filepath, "rb");
+		if (fp == NULL) {
+                	fprintf(stderr, "Could not open quicksave.\n");
+                	goto handle_error;
+        	}
 		fread(&rn, sizeof(rn), 1, fp);
-		fclose(fp);
+        	fclose(fp);
+		
 		int currentScore = rn.score;
 		int currentLines = rn.lines;
 
@@ -121,7 +133,7 @@ int main(int argc, char* argv[]) {
 		if (!strcmp(my_args[0], "rank")) {
 			if (pipe(pip) == -1){
 				fprintf(stderr, "Pipe failed\n");
-				return 1;
+				goto handle_error;
 			}			                        
 		}
 		if (!strcmp(my_args[0], "undo")) {
@@ -152,9 +164,6 @@ int main(int argc, char* argv[]) {
 				printf("Previous quicksave restored.\n");
 			}
 		}
-		/*		if (!strcmp(arg, "info")){
-				printf("Current savefile: %s\nScore: %i\nLines: %i\n", filepath, filepath->score, filepath->lines)
-				}*/
 		if (!strcmp(arg, "help")){
 			arg = strtok(NULL, " ");
 			if (!strcmp(arg, "check")){
@@ -188,6 +197,14 @@ int main(int argc, char* argv[]) {
 			printf("Switched current quicksave from %s to %s\n", oldfile, filepath);
 		}
 
+		if (!strcmp(arg, "train")) {
+			
+				int difficulty = 1;
+				int r = (rand() % (int)(pow(10, difficulty) - pow(10, difficulty-1) + 1) + pow(10, difficulty-1));
+		       		printf("%d\n", r);
+				
+		}
+
 		else {
 
 
@@ -199,7 +216,7 @@ int main(int argc, char* argv[]) {
 					close(pip[0]);
 					if (write(pip[1], filepath, strlen(filepath)) == -1) {
 						fprintf(stderr, "Write failed. errno: %i\n", errno);
-						return 1;
+						goto handle_error;
 					}
 					close(pip[1]);}
 				wait(&res);                 
@@ -223,6 +240,7 @@ int main(int argc, char* argv[]) {
 					}
 					else {
 						fprintf(stderr, "Could not open directory\n");
+						goto handle_error;
 					}
 
 					//get number of digits in fileCount
@@ -352,6 +370,7 @@ int main(int argc, char* argv[]) {
 					else {
 						printf("Okay, quicksave not switched.\n");
 					}
+					free(fileNames);
 				}
 			} else {
 
@@ -366,7 +385,7 @@ int main(int argc, char* argv[]) {
 				if ((strcmp(my_args[0], "recover") == 0) || (strcmp(my_args[0], "check") == 0)) {
 					if (i != 1) {
 						fprintf(stderr, "Check and recover do not take arguments.\n");
-						return 1;
+						goto handle_error;
 					}
 					my_args[i] = filepath;
 					my_args[i+1] = NULL;
@@ -382,7 +401,7 @@ int main(int argc, char* argv[]) {
 				else if (!strcmp(my_args[0], "modify")) {
 					if (i != 3) {
 						fprintf(stderr, "Please enter a scoring metric and a number.\n");
-						return 1;
+						goto handle_error;
 					}
 
 					fp = fopen(filepath, "rb");
@@ -400,7 +419,7 @@ int main(int argc, char* argv[]) {
 					close(pip[1]);
 					if (dup2(pip[0], 0) == -1) {
 						fprintf(stderr, "invalid file\n");
-						return 1;
+						goto handle_error;
 					}
 					close(pip[0]);
 					if (i < 3)
@@ -420,9 +439,26 @@ int main(int argc, char* argv[]) {
 			}
 
 		}
-	}
+		handle_error:
+                if (sizeof(filepath)) {free(filepath);}
+                if (sizeof(command)) {free(command);}
+                if (sizeof(arg)) {free(arg);}
+                if (sizeof(my_args)) {free(my_args);}
+                if (sizeof(program)) {free(program);}
+                if (sizeof(my_args[1])) {
+                        for (int i = 0; i < 5; i++) {
+                                free(my_args[i]);
+                        }
+                }
+                return 1;
 
-	//still need to free all our shit
+        free(filepath);
+        free(command);
+        free(arg);
+        free(my_args);
+        free(program);
+	
+	}
 
 	return 0;
 }
