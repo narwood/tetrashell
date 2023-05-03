@@ -47,8 +47,8 @@ int main(int argc, char* argv[]) {
 
 	const int MAX_LINE = 4096;
 
-	char *filepath = malloc(sizeof(char) * MAX_LINE);
-	char *command = malloc(sizeof(char) * MAX_LINE);
+	char filepath[MAX_LINE];
+	char command[MAX_LINE];
 	char *arg = malloc(sizeof(char) * 50);
 	char **my_args = malloc(sizeof(char*) * 5);
 	char *program = malloc(sizeof(char*) * 50);
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
     	FILE* flower = fopen("flower.txt", "r");
     	if (flower == NULL) {
         	printf("File could not be opened\n");
-        	goto handle_error;
+        	//goto handle_error;
     	}	
     	while ((c = fgetc(flower)) != EOF) {
         	snprintf(s, sizeof(s), "%c", c);
@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
 	fp = fopen(filepath, "rb");
         if (fp == NULL) {
         	fprintf(stderr, "Could not open quicksave.\n");
-                goto handle_error;
+                //goto handle_error;
         }
         printf("Quicksave set.\nEnter your command below:\n");
         fclose(fp);
@@ -106,7 +106,7 @@ int main(int argc, char* argv[]) {
 		fp = fopen(filepath, "rb");
 		if (fp == NULL) {
                 	fprintf(stderr, "Could not open quicksave.\n");
-                	goto handle_error;
+                	//goto handle_error;
         	}
 		fread(&rn, sizeof(rn), 1, fp);
         	fclose(fp);
@@ -133,7 +133,7 @@ int main(int argc, char* argv[]) {
 		if (!strcmp(my_args[0], "rank")) {
 			if (pipe(pip) == -1){
 				fprintf(stderr, "Pipe failed\n");
-				goto handle_error;
+				//goto handle_error;
 			}			                        
 		}
 		if (!strcmp(my_args[0], "undo")) {
@@ -198,13 +198,38 @@ int main(int argc, char* argv[]) {
 		}
 
 		if (!strcmp(arg, "train")) {
-			
-				int difficulty = 1;
-				int r = (rand() % (int)(pow(10, difficulty) - pow(10, difficulty-1) + 1) + pow(10, difficulty-1));
-		       		printf("%d\n", r);
-				
-		}
+				char guess[MAX_LINE];
+				int guessnum;
+				int difficulty = 2;
+				int replay = 1;
 
+				while(replay){
+				int decimal, binary = 0, base = 1, remainder;
+				decimal = (rand() % (int)(pow(10, difficulty) - pow(10, difficulty-1) + 1) + pow(10, difficulty-1));
+		       		
+				printf("What is this hex number in binary? 0x%x\n", decimal);
+				fgets(guess, MAX_LINE, stdin);
+				guess[strlen(guess) - 1] = '\0';
+				guessnum = atoi(guess);
+				while (decimal != 0) {
+					remainder = decimal % 2;
+					binary = binary + remainder * base;
+					decimal = decimal / 2;
+					base = base * 10;
+				}
+				printf("The answer is %d!\n", binary);
+				if (guessnum == binary){
+					printf("You got it! Next we'll try one that's a little harder. Would you like to continue? Type 'y' if yes and any key to exit.\n");
+					++difficulty;
+				} else { printf("Hmm, you weren't quite right. Next we'll try an easier one. Would you like to continue? Type 'y' if yes and any key to exit.\n");
+					if (difficulty > 1){
+						--difficulty;
+					}
+				}
+				fgets(command, MAX_LINE, stdin);
+				if ('y' != command[0]){
+					replay = 0;}
+}}
 		else {
 
 
@@ -216,7 +241,7 @@ int main(int argc, char* argv[]) {
 					close(pip[0]);
 					if (write(pip[1], filepath, strlen(filepath)) == -1) {
 						fprintf(stderr, "Write failed. errno: %i\n", errno);
-						goto handle_error;
+						//goto handle_error;
 					}
 					close(pip[1]);}
 				wait(&res);                 
@@ -240,7 +265,7 @@ int main(int argc, char* argv[]) {
 					}
 					else {
 						fprintf(stderr, "Could not open directory\n");
-						goto handle_error;
+						//goto handle_error;
 					}
 
 					//get number of digits in fileCount
@@ -363,7 +388,7 @@ int main(int argc, char* argv[]) {
 						else {
 							char setFile[MAX_LINE];
 							snprintf(setFile, MAX_LINE, "./recovered/%s", fileNames[switchSave-1]);
-							filepath = setFile;
+							strcpy(filepath, setFile);
 							printf("Done! Current quicksave is now %s\n", filepath);
 						}
 					}
@@ -385,7 +410,7 @@ int main(int argc, char* argv[]) {
 				if ((strcmp(my_args[0], "recover") == 0) || (strcmp(my_args[0], "check") == 0)) {
 					if (i != 1) {
 						fprintf(stderr, "Check and recover do not take arguments.\n");
-						goto handle_error;
+						//goto handle_error;
 					}
 					my_args[i] = filepath;
 					my_args[i+1] = NULL;
@@ -401,7 +426,7 @@ int main(int argc, char* argv[]) {
 				else if (!strcmp(my_args[0], "modify")) {
 					if (i != 3) {
 						fprintf(stderr, "Please enter a scoring metric and a number.\n");
-						goto handle_error;
+						//goto handle_error;
 					}
 
 					fp = fopen(filepath, "rb");
@@ -419,7 +444,7 @@ int main(int argc, char* argv[]) {
 					close(pip[1]);
 					if (dup2(pip[0], 0) == -1) {
 						fprintf(stderr, "invalid file\n");
-						goto handle_error;
+						//goto handle_error;
 					}
 					close(pip[0]);
 					if (i < 3)
@@ -439,27 +464,13 @@ int main(int argc, char* argv[]) {
 			}
 
 		}
-		handle_error:
-                if (sizeof(filepath)) {free(filepath);}
-                if (sizeof(command)) {free(command);}
-                if (sizeof(arg)) {free(arg);}
-                if (sizeof(my_args)) {free(my_args);}
-                if (sizeof(program)) {free(program);}
-                if (sizeof(my_args[1])) {
-                        for (int i = 0; i < 5; i++) {
-                                free(my_args[i]);
-                        }
-                }
-                return 1;
-
-        free(filepath);
-        free(command);
-        free(arg);
-        free(my_args);
-        free(program);
-	
 	}
+	//	free(filepath);
+	//	free(command);
+		free(arg);
+		free(my_args);
+		free(program);	
 
-	return 0;
-}
+		return 0;
+	}
 
