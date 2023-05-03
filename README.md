@@ -11,6 +11,7 @@
   * Help
   * Save info
   * Undo
+  * Train w/ difficulty adapting
 
 * Improved prompt:
   * Includes username, abbreviated filepath, current score, and current line
